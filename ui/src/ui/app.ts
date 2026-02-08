@@ -385,6 +385,11 @@ export class OpenClawApp extends LitElement {
 
   protected firstUpdated() {
     handleFirstUpdated(this as unknown as Parameters<typeof handleFirstUpdated>[0]);
+    // If starting on Mission Control tab, start refresh and load tasks
+    if (this.tab === "mission-control") {
+      this.startMissionControlRefresh();
+      void this.loadMissionControlTasks();
+    }
   }
 
   disconnectedCallback() {
@@ -394,6 +399,16 @@ export class OpenClawApp extends LitElement {
 
   protected updated(changed: Map<PropertyKey, unknown>) {
     handleUpdated(this as unknown as Parameters<typeof handleUpdated>[0], changed);
+    // Handle Mission Control tab visibility changes
+    if (changed.has("tab")) {
+      const oldTab = changed.get("tab") as string;
+      if (this.tab === "mission-control" && oldTab !== "mission-control") {
+        this.startMissionControlRefresh();
+        void this.loadMissionControlTasks();
+      } else if (this.tab !== "mission-control" && oldTab === "mission-control") {
+        this.stopMissionControlRefresh();
+      }
+    }
   }
 
   connect() {
