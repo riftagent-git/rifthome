@@ -41,7 +41,7 @@ type Job = {
   revision_count: number;
 };
 
-export const missionControlMethods: GatewayRequestHandlers = {
+export const missionControlHandlers: GatewayRequestHandlers = {
   "missionControl.list": ({ respond }) => {
     try {
       const database = getDb();
@@ -156,5 +156,48 @@ export const missionControlMethods: GatewayRequestHandlers = {
         errorShape(ErrorCodes.INTERNAL_ERROR, `Failed to delete job: ${String(error)}`),
       );
     }
+  },
+
+  "missionControl.create": ({ params, respond }) => {
+    try {
+      const database = getDb();
+      const now = Date.now();
+      const id = crypto.randomUUID();
+
+      database
+        .prepare(
+          `INSERT INTO jobs (id, type, title, description, status, priority, agent_id, created_at, updated_at, tags)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        )
+        .run(
+          id,
+          String(params?.type ?? "task"),
+          String(params?.title ?? ""),
+          params?.description ?? null,
+          "pending",
+          Number(params?.priority ?? 0),
+          params?.agent_id ?? null,
+          now,
+          null,
+          params?.tags ?? null,
+        );
+
+      respond(true, { ok: true, id }, undefined);
+    } catch (error) {
+      respond(
+        false,
+        undefined,
+        errorShape(ErrorCodes.INTERNAL_ERROR, `Failed to create job: ${String(error)}`),
+      );
+    }
+  },
+
+  "missionControl.spawn": ({ params, respond }) => {
+    // Stub - actual spawn logic to be implemented
+    respond(
+      false,
+      undefined,
+      errorShape(ErrorCodes.NOT_IMPLEMENTED, "Mission control spawn not yet implemented"),
+    );
   },
 };
